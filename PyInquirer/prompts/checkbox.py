@@ -160,7 +160,7 @@ def question(message, **kwargs):
                            ' (<up>, <down> to move, <space> to select, <a> '
                            'to toggle, <i> to invert)'))
             if not ic.answered_correctly:
-                tokens.append((Token.Error, ' Error: %s' % ic.error_message))
+                tokens.append(('class:error', ' Error: %s' % ic.error_message))
         return tokens
 
     # assemble layout

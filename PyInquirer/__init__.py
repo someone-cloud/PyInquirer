@@ -7,7 +7,7 @@ from .utils import print_json, format_json
 from .separator import Separator
 from .prompts.common import default_style
 
-__version__ = '1.0.2'
+__version__ = '1.0.4'
 
 
 def here(p):
@@ -32,7 +32,6 @@ def style_from_dict(style_dict):
         '.'.join(key).lower(): value for key, value in style_dict.items()
     })
   
-from pygments.token import Token
 from prompt_toolkit.validation import Validator, ValidationError
 
 __all__ = ["PromptParameterException", "style_from_dict"]
