@@ -14,8 +14,8 @@ dependency_links = [x.strip().replace('git+', '') for x in all_reqs \
                     if 'git+' in x]
 
 setup(
-    name='PyInquirer',
-    version='1.0.4',
+    name='pyinquirer-revived',
+    version='1.0.5',
     description=(
           'A Python module for collection of common interactive command line user interfaces,'
           ' based on Inquirer.js'

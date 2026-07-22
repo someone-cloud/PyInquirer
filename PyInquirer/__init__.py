@@ -3,11 +3,10 @@
 import os
 
 from .utils import print_json, format_json
-# from .prompt import prompt
 from .separator import Separator
 from .prompts.common import default_style
 
-__version__ = '1.0.4'
+__version__ = '1.0.5'
 
 
 def here(p):
@@ -41,4 +40,10 @@ from prompt_toolkit.validation import Validator, ValidationError
 class Token:
     pass
 
-__all__ = ["PromptParameterException", "style_from_dict", "Token"]
+__all__ = ["PromptParameterException", "style_from_dict", "Token", "prompt"]
+
+
+# Lazy import for prompt to avoid circular dependency
+def prompt(questions, answers=None, **kwargs):
+    from .prompt import prompt as _prompt
+    return _prompt(questions, answers, **kwargs)

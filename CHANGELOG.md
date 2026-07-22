@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.5] — 2026-07-22
+
+### Fixed
+- **`prompt` not exported**: Fixed circular import that prevented `from PyInquirer import prompt` from working. Now uses lazy import pattern.
+
 ## [1.0.4] — 2026-07-22
 
 ### Added

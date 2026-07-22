@@ -1,10 +1,10 @@
 [build-system]
 requires = ["setuptools>=64", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "PyInquirer"
-version = "1.0.4"
+name = "pyinquirer-revived"
+version = "1.0.5"
 description = "A Python module for common interactive command line user interfaces"
 readme = "README.md"
 license = {text = "MIT"}
