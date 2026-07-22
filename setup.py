@@ -15,7 +15,7 @@ dependency_links = [x.strip().replace('git+', '') for x in all_reqs \
 
 setup(
     name='pyinquirer-revived',
-    version='1.0.5',
+    version='1.0.6',
     description=(
           'A Python module for collection of common interactive command line user interfaces,'
           ' based on Inquirer.js'

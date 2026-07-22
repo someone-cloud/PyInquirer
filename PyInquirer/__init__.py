@@ -6,7 +6,7 @@ from .utils import print_json, format_json
 from .separator import Separator
 from .prompts.common import default_style
 
-__version__ = '1.0.5'
+__version__ = '1.0.6'
 
 
 def here(p):
