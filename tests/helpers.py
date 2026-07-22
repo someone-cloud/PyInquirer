@@ -64,13 +64,21 @@ def feed_app_with_input(type, message, text, **kwargs):
     # If the given text doesn't end with a newline, the interface won't finish.
     assert text.endswith('\r')
 
-    inp = PosixPipeInput(text)
+    # PosixPipeInput API differs between prompt_toolkit versions:
+    #   <3.0.30: PosixPipeInput(text=str) — creates pipe, writes text
+    #   >=3.0.30: PosixPipeInput(fd=int) — takes a file descriptor
+    import os as _os
+    try:
+        inp = PosixPipeInput(text)
+    except (TypeError, AttributeError):
+        r_fd, w_fd = _os.pipe()
+        _os.write(w_fd, text.encode('utf-8'))
+        _os.close(w_fd)
+        inp = PosixPipeInput(r_fd)
 
     try:
         with create_app_session(input=inp, output=DummyOutput()) as session:
             application = getattr(prompts, type).question(message, **kwargs)
-            #print(application.input)
-            #breakpoint()
 
             if isinstance(application, Application):
                 result = application.run()
