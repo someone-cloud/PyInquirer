@@ -44,6 +44,14 @@ def prompt(questions, answers=None, **kwargs):
             type_ = _kwargs.pop('type')
             name = _kwargs.pop('name')
             message = _kwargs.pop('message')
+            # Fix #96: allow message as function(answers) -> str
+            if callable(message):
+                try:
+                    message = message(answers)
+                except Exception as e:
+                    raise ValueError(
+                        'Problem processing \'message\' function of %s question: %s' %
+                        (name, e))
             when = _kwargs.pop('when', None)
             filter = _kwargs.pop('filter', None)
 
@@ -52,6 +60,9 @@ def prompt(questions, answers=None, **kwargs):
                 if callable(question['when']):
                     try:
                         if not question['when'](answers):
+                            # Fix #130: still add default value when question is skipped
+                            if 'default' in question:
+                                answers[name] = question['default'] if not callable(question.get('default')) else question['default'](answers)
                             continue
                     except Exception as e:
                         raise ValueError(

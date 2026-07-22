@@ -162,7 +162,9 @@ def question(message, **kwargs):
     text = default
     filename = eargs.get("filename", None)
     multiline = True if not editor else False
+    # Fix #70: handle save parameter correctly
     save = eargs.get("save", None)
+    require_save = save if save is not None else True
 
     if editor:
         _text = edit(
@@ -171,7 +173,7 @@ def question(message, **kwargs):
             text=text,
             env=env,
             filename=filename,
-            require_save=save
+            require_save=require_save
         )
         if filename:
             default = filename

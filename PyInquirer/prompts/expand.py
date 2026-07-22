@@ -37,7 +37,9 @@ class InquirerControl(FormattedTextControl):
                 self.choices.append(c)
             else:
                 if isinstance(c, str):
-                    self.choices.append((key, c, c))
+                    # Fix #50: handle plain string choices with auto key
+                    key = c[0].lower()
+                    self.choices.append([key, c, c])
                 else:
                     key = c.get('key')
                     name = c.get('name')
@@ -47,12 +49,13 @@ class InquirerControl(FormattedTextControl):
         # append the help choice
         self.choices.append(['h', 'Help, list all options', '__HELP__'])
 
+        # Fix #50: use 'h' as default if no default specified
+        default = default or 'h'
         # set the default
         for i, choice in enumerate(self.choices):
             if isinstance(choice, list):
                 key = choice[0]
-                default = default or "h"
-                if default == key:
+                if default.lower() == key.lower():
                     self.pointer_index = i
                     choice[0] = key.upper()  # default key is in uppercase
 
