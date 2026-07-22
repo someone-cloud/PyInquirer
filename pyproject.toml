@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "PyInquirer"
+version = "1.0.4"
+description = "A Python module for common interactive command line user interfaces"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Zafrul Razeem", email = "someone-cloud@users.noreply.github.com"}
+]
+requires-python = ">=3.8"
+keywords = ["cli", "prompt-toolkit", "command-line", "inquirer"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = [
+    "prompt_toolkit>=3.0.0,<4.0.0",
+    "Pygments>=2.2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/someone-cloud/PyInquirer"
+Repository = "https://github.com/someone-cloud/PyInquirer"
+Changelog = "https://github.com/someone-cloud/PyInquirer/blob/master/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ptyprocess>=0.7.0",
+]
+
+[tool.setuptools.packages.find]
+exclude = ["docs", "tests*"]
