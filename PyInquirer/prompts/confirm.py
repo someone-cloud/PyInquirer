@@ -8,15 +8,14 @@ from prompt_toolkit.styles import Style
 
 
 def question(message, **kwargs):
-    # TODO need ENTER confirmation
+    # Fix #48: add require_enter option
+    require_enter = kwargs.pop('require_enter', False)
     default = kwargs.pop('default', True)
 
-    # TODO style defaults on detail level
     style = kwargs.pop('style', Style.from_dict({
         'questionmark': '#5F819D',
-        #'selected': '#FF9D00',  # AWS orange
-        'instruction': '',  # default
-        'answer': '#FF9D00 bold',  # AWS orange
+        'instruction': '',
+        'answer': '#FF9D00 bold',
         'question': 'bold',
     }))
     status = {'answer': None}
@@ -32,9 +31,9 @@ def question(message, **kwargs):
             tokens.append(('class:answer', ' Yes' if status['answer'] else ' No'))
         else:
             if default:
-                instruction = ' (Y/n)'
+                instruction = ' (Y/n)' if not require_enter else ' (Y/n, Enter to confirm)'
             else:
-                instruction = ' (y/N)'
+                instruction = ' (y/N)' if not require_enter else ' (y/N, Enter to confirm)'
             tokens.append(('class:instruction', instruction))
         return tokens
 
@@ -50,18 +49,28 @@ def question(message, **kwargs):
     @kb.add('N')
     def key_n(event):
         status['answer'] = False
-        event.app.exit(result=False)
+        if not require_enter:
+            event.app.exit(result=False)
+        # If require_enter, wait for Enter
 
     @kb.add('y')
     @kb.add('Y')
     def key_y(event):
         status['answer'] = True
-        event.app.exit(result=True)
+        if not require_enter:
+            event.app.exit(result=True)
+        # If require_enter, wait for Enter
 
     @kb.add('enter', eager=True)
     def set_answer(event):
-        status['answer'] = default
-        event.app.exit(result=default)
+        if require_enter and status['answer'] is None:
+            # Enter without Y/N = use default
+            status['answer'] = default
+        if status['answer'] is not None:
+            event.app.exit(result=status['answer'])
+        # If no answer selected yet, just submit default
+        if status['answer'] is None:
+            event.app.exit(result=default)
 
     return PromptSession(
         message=get_prompt_tokens,

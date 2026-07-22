@@ -9,11 +9,15 @@ from prompt_toolkit.lexers import SimpleLexer
 
 from .common import default_style
 
-# use std prompt-toolkit control
-
 
 def question(message, **kwargs):
+    # Fix #151: Allow message as function (#96)
+    if callable(message):
+        message = message()
+
     default = kwargs.pop('default', '')
+    # Fix #185: pop style first to avoid conflicts with prompt_toolkit
+    style = kwargs.pop('style', default_style)
     validate_prompt = kwargs.pop('validate', None)
     if validate_prompt:
         if inspect.isclass(validate_prompt) and issubclass(validate_prompt, Validator):
@@ -30,8 +34,11 @@ def question(message, **kwargs):
                             cursor_position=len(document.text))
             kwargs['validator'] = _InputValidator()
 
-    # TODO style defaults on detail level
-    kwargs['style'] = kwargs.pop('style', default_style)
+    # Fix #155: convert default to string if number
+    if default is not None and not isinstance(default, str):
+        default = str(default)
+
+    kwargs['style'] = style
     qmark = kwargs.pop('qmark', '?')
 
 

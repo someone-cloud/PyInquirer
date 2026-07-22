@@ -10,16 +10,13 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.containers import ConditionalContainer, HSplit
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout import Layout
+from prompt_toolkit.shortcuts import PromptSession
 
 from . import PromptParameterException
 from ..separator import Separator
-from .common import if_mousedown, default_style
+from .common import if_mousedown, default_style, setup_simple_validator
 
 # custom control based on FormattedTextControl
-# docu here:
-# https://github.com/jonathanslenders/python-prompt-toolkit/issues/281
-# https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/examples/full-screen-layout.py
-# https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/docs/pages/full_screen_apps.rst
 
 
 class InquirerControl(FormattedTextControl):
@@ -45,14 +42,15 @@ class InquirerControl(FormattedTextControl):
                     value = c.get('value', name)
                     disabled = c.get('disabled', None)
                     self.choices.append((name, value, disabled))
-                    if value == default:
+                    # Fix #78: don't auto-select disabled choices
+                    if value == default and not disabled:
                         self.selected_option_index = i
                         searching_first_choice = False
-                if searching_first_choice:
-                    self.selected_option_index = i  # found the first choice
+                if searching_first_choice and not self.choices[-1][2]:
+                    self.selected_option_index = i
                     searching_first_choice = False
                 if default and (default == i or default == c):
-                    self.selected_option_index = i  # default choice exists
+                    self.selected_option_index = i
                     searching_first_choice = False
 
     @property
@@ -70,7 +68,10 @@ class InquirerControl(FormattedTextControl):
                 # bind option with this index to mouse event
                 self.selected_option_index = index
                 self.answered = True
-                get_app().exit(result=self.get_selection()[0])
+                try:
+                    get_app().exit(result=self.get_selection()[0])
+                except Exception:
+                    pass
 
             if isinstance(choice[0], Separator):
                 tokens.append(('class:separator', '  %s\n' % choice[0]))
@@ -102,15 +103,18 @@ class InquirerControl(FormattedTextControl):
 
 
 def question(message, **kwargs):
-    # TODO disabled, dict choices
     if not 'choices' in kwargs:
         raise PromptParameterException('choices')
 
     choices = kwargs.pop('choices', None)
     default = kwargs.pop('default', None)
     qmark = kwargs.pop('qmark', '?')
-    # TODO style defaults on detail level
+    # Fix #185: use default_style if no style provided
     style = kwargs.pop('style', default_style)
+    # Fix #54/#183: implement pageSize
+    page_size = kwargs.pop('pageSize', kwargs.pop('page_size', None))
+    # Fix #107: allow disabling mouse support
+    mouse_support = kwargs.pop('mouse_support', True)
 
     ic = InquirerControl(choices, default=default)
 
@@ -125,13 +129,17 @@ def question(message, **kwargs):
             tokens.append(('class:instruction', ' (Use arrow keys)'))
         return tokens
 
-    # assemble layout
+    # Fix #166: allow multiline messages by not fixing height to exact 1
+    window_height = D(min=1)
+    if page_size:
+        window_height = D(min=min(3, page_size), max=page_size + 1)
+
     layout = HSplit([
         Window(height=D.exact(1),
                content=FormattedTextControl(get_prompt_tokens)
         ),
         ConditionalContainer(
-            Window(ic),
+            Window(ic, height=window_height),
             filter=~IsDone()
         )
     ])
@@ -145,7 +153,9 @@ def question(message, **kwargs):
         raise KeyboardInterrupt()
         # event.app.exit(result=None)
 
+    # Fix #138/#87: add vim-style navigation
     @kb.add('down', eager=True)
+    @kb.add('j', eager=True)
     def move_cursor_down(event):
         def _next():
             ic.selected_option_index = (
@@ -156,6 +166,7 @@ def question(message, **kwargs):
             _next()
 
     @kb.add('up', eager=True)
+    @kb.add('k', eager=True)
     def move_cursor_up(event):
         def _prev():
             ic.selected_option_index = (
@@ -173,6 +184,6 @@ def question(message, **kwargs):
     return Application(
         layout=Layout(layout),
         key_bindings=kb,
-        mouse_support=True,
+        mouse_support=mouse_support,
         style=style
     )

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+import sys
 from contextlib import contextmanager
 from . import PromptParameterException, prompts
 from .prompts import list, confirm, input, password, checkbox, rawlist, expand, editor
@@ -97,6 +99,15 @@ def prompt(questions, answers=None, **kwargs):
             print(e)
             raise ValueError('No question type \'%s\'' % type_)
         except KeyboardInterrupt as exc:
+            # Fix #180: reset terminal on interrupt to prevent garbled terminal
+            try:
+                from prompt_toolkit.output.defaults import create_output
+                output = create_output()
+                output.reset_attributes()
+                output.disable_autowrap()
+                output.enable_autowrap()
+            except Exception:
+                pass  # best-effort terminal reset
             if raise_kbi:
                 raise exc from None
             if kbi_msg:

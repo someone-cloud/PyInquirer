@@ -118,7 +118,6 @@ class InquirerControl(FormattedTextControl):
 def question(message, **kwargs):
     # TODO add bottom-bar (Move up and down to reveal more choices)
     # TODO extract common parts for list, checkbox, rawlist, expand
-    # TODO validate
     if not 'choices' in kwargs:
         raise PromptParameterException('choices')
     # this does not implement default, use checked...
@@ -129,7 +128,7 @@ def question(message, **kwargs):
     choices = kwargs.pop('choices', None)
     validator = setup_simple_validator(kwargs)
 
-    # TODO style defaults on detail level
+    # Fix #139: style defaults
     style = kwargs.pop('style', default_style)
 
     pointer_index = kwargs.pop('pointer_index', 0)
@@ -137,10 +136,14 @@ def question(message, **kwargs):
     additional_parameters.update({"pointer_sign": kwargs.pop('pointer_sign', '\u276f')})
     additional_parameters.update({"selected_sign": kwargs.pop('selected_sign', '\u25cf')})
     additional_parameters.update({"unselected_sign": kwargs.pop('unselected_sign', '\u25cb')})
+    # Fix #107: allow disabling mouse support
+    mouse_support = kwargs.pop('mouse_support', True)
 
     ic = InquirerControl(choices, pointer_index, **additional_parameters)
     qmark = kwargs.pop('qmark', '?')
+    kvim = kwargs.pop('vi_mode', False)
 
+    # Fix #46/#161: validator is created but never called on enter
     def get_prompt_tokens():
         tokens = []
 
@@ -205,18 +208,21 @@ def question(message, **kwargs):
                               not c[2]]
         ic.selected_options = inverted_selection
 
+    # Fix #197: Ctrl+A for select all
     @kb.add('a', eager=True)
-    def all(event):
-        all_selected = True  # all choices have been selected
+    @kb.add('c-a', eager=True)
+    def toggle_all(event):
+        all_selected = True
         for c in ic.choices:
             if not isinstance(c, Separator) and c[1] not in ic.selected_options and not c[2]:
-                # add missing ones
                 ic.selected_options.append(c[1])
                 all_selected = False
         if all_selected:
             ic.selected_options = []
 
+    # Fix #138: add vim keys and fix disabled first item (#78)
     @kb.add('down', eager=True)
+    @kb.add('j', eager=True)
     def move_cursor_down(event):
         def _next():
             ic.pointer_index = ((ic.pointer_index + 1) % ic.line_count)
@@ -226,6 +232,7 @@ def question(message, **kwargs):
             _next()
 
     @kb.add('up', eager=True)
+    @kb.add('k', eager=True)
     def move_cursor_up(event):
         def _prev():
             ic.pointer_index = ((ic.pointer_index - 1) % ic.line_count)
@@ -236,13 +243,19 @@ def question(message, **kwargs):
 
     @kb.add('enter', eager=True)
     def set_answer(event):
-        ic.answered = True
-        # TODO use validator
-        event.app.exit(result=ic.get_selected_values())
+        # Fix #46/#161: use the validator
+        selected = ic.get_selected_values()
+        error = validator(selected) if callable(validator) else True
+        if error is True:
+            ic.answered = True
+            event.app.exit(result=selected)
+        else:
+            ic.answered_correctly = False
+            ic.error_message = str(error)
 
     return Application(
         layout=Layout(layout),
         key_bindings=kb,
-        mouse_support=True,
+        mouse_support=mouse_support,
         style=style
     )
