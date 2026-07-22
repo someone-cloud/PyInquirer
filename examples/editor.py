@@ -2,7 +2,7 @@
 """
 * Editor prompt example
 """
-from PyInquirer import style_from_dict, Token, prompt, print_json
+from PyInquirer import style_from_dict, prompt, print_json
 from PyInquirer import Validator, ValidationError
 from examples import custom_style_2
 from pprint import pprint

@@ -34,4 +34,11 @@ def style_from_dict(style_dict):
   
 from prompt_toolkit.validation import Validator, ValidationError
 
-__all__ = ["PromptParameterException", "style_from_dict"]
+# Backward compatibility: Token was previously re-exported from pygments.token
+# which internally uses collections.Mapping (removed in Python 3.10+). Code
+# that imported Token from PyInquirer (e.g. older examples) will still work.
+# New code should use prompt_toolkit Style classes ('class:error', etc.) instead.
+class Token:
+    pass
+
+__all__ = ["PromptParameterException", "style_from_dict", "Token"]
